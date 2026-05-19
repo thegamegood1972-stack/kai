@@ -6,10 +6,10 @@ st.set_page_config(page_title="Kai - Red Neuronal", layout="wide")
 st.title("🧠 Kai - Tu Asistente de Redes Neuronales")
 
 # Configurar DeepSeek
-api_key = st.secrets["sk-75042d03f603479695dcfc8caa1a6f54"]
+api_key = st.secrets["DEEPSEEK_API_KEY"]
 cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
-# Funciones de red neuronal
+# Función de código de red neuronal
 def codigo_red_neuronal():
     return """
 ```python
@@ -36,18 +36,6 @@ red = RedNeuronal(2, 4, 1)
 print(red.forward(entrada))
 ```"""
 
-def explicar_backpropagation():
-    return """
-**Retropropagación (Backpropagation)**
-
-Es el algoritmo que ajusta los pesos de la red para minimizar el error.  
-Proceso:
-1. Hacer una predicción (forward)
-2. Calcular el error
-3. Propagar el error hacia atrás
-4. Repetir muchas veces
-"""
-
 # Interfaz de chat
 if "mensajes" not in st.session_state:
     st.session_state.mensajes = []
@@ -64,10 +52,8 @@ if prompt := st.chat_input("Pregunta sobre redes neuronales..."):
     with st.chat_message("assistant"):
         with st.spinner("Kai está pensando..."):
             try:
-                if "código" in prompt.lower() or "codigo" in prompt.lower() or "codigo" in prompt.lower():
+                if "código" in prompt.lower() or "codigo" in prompt.lower():
                     respuesta = codigo_red_neuronal()
-                elif "backpropagation" in prompt.lower():
-                    respuesta = explicar_backpropagation()
                 else:
                     response = cliente.chat.completions.create(
                         model="deepseek-chat",
