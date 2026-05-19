@@ -4,11 +4,24 @@ import google.generativeai as genai
 st.set_page_config(page_title="Kai", layout="wide")
 st.title("🌊 Kai - Asistente IA")
 
-# Configurar Gemini
+st.write("### Depuración: Iniciando...")
+
 try:
-   genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    # Verificar que Secrets existe
+    if "GEMINI_API_KEY" in st.secrets:
+        st.success("✅ Secrets encontrado: GEMINI_API_KEY")
+        api_key = st.secrets["GEMINI_API_KEY"]
+        st.write(f"La clave comienza con: {api_key[:10]}...")
+    else:
+        st.error("❌ GEMINI_API_KEY NO encontrado en Secrets")
+        st.write("Claves disponibles:", list(st.secrets.keys()))
+        st.stop()
+    
+    # Configurar Gemini
+    genai.configure(api_key=api_key)
     modelo = genai.GenerativeModel('gemini-1.5-flash')
     st.success("✅ Conectado a Gemini!")
+    
 except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
