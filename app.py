@@ -6,7 +6,7 @@ st.set_page_config(page_title="Kai - Red Neuronal", layout="wide")
 st.title("🧠 Kai - Tu Asistente de Redes Neuronales")
 
 # Configurar DeepSeek
-api_key = st.secrets["DEEPSEEK_API_KEY"]
+api_key = st.secrets["sk-75042d03f603479695dcfc8caa1a6f54"]
 cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
 # Función de código de red neuronal
