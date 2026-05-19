@@ -8,7 +8,7 @@ st.title("🧠 Kai - Tu Asistente de Redes Neuronales")
 # Configurar Gemini
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-modelo = genai.GenerativeModel('gemini-1.5-flash')
+modelo = genai.GenerativeModel('gemini-pro')
 
 # Funciones de red neuronal
 def codigo_red_neuronal():
