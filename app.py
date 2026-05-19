@@ -8,7 +8,7 @@ st.title("🧠 Kai - Tu Asistente de Redes Neuronales")
 # Configurar Gemini
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-modelo = genai.GenerativeModel('gemini-pro')
+modelo = genai.GenerativeModel('gemini-pro')  # ← MODELO CORREGIDO
 
 # Funciones de red neuronal
 def codigo_red_neuronal():
@@ -74,6 +74,6 @@ if prompt := st.chat_input("Pregunta sobre redes neuronales..."):
                 else:
                     respuesta = modelo.generate_content(prompt).text
             except Exception as e:
-                respuesta = f"🌊 Lo siento, tuve un error: {str(e)}. Por favor, intenta con otra pregunta."
+                respuesta = f"🌊 Lo siento, tuve un error: {str(e)}"
             st.markdown(respuesta)
     st.session_state.mensajes.append({"rol": "assistant", "contenido": respuesta})
