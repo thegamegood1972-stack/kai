@@ -66,11 +66,14 @@ if prompt := st.chat_input("Pregunta sobre redes neuronales..."):
     
     with st.chat_message("assistant"):
         with st.spinner("Kai está pensando..."):
-            if "código" in prompt.lower() or "codigo" in prompt.lower():
-                respuesta = codigo_red_neuronal()
-            elif "backpropagation" in prompt.lower():
-                respuesta = explicar_backpropagation()
-            else:
-                respuesta = modelo.generate_content(prompt).text
+            try:
+                if "código" in prompt.lower() or "codigo" in prompt.lower():
+                    respuesta = codigo_red_neuronal()
+                elif "backpropagation" in prompt.lower():
+                    respuesta = explicar_backpropagation()
+                else:
+                    respuesta = modelo.generate_content(prompt).text
+            except Exception as e:
+                respuesta = f"🌊 Lo siento, tuve un error: {str(e)}. Por favor, intenta con otra pregunta."
             st.markdown(respuesta)
     st.session_state.mensajes.append({"rol": "assistant", "contenido": respuesta})
