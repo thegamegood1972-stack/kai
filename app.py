@@ -1,14 +1,13 @@
 import streamlit as st
-import google.generativeai as genai
+from openai import OpenAI
 import numpy as np
 
 st.set_page_config(page_title="Kai - Red Neuronal", layout="wide")
 st.title("🧠 Kai - Tu Asistente de Redes Neuronales")
 
-# Configurar Gemini
-api_key = st.secrets["GEMINI_API_KEY"]
-genai.configure(api_key=api_key)
-modelo = genai.GenerativeModel('gemini-1.0-pro')  # ← MODELO MÁS ESTABLE
+# Configurar DeepSeek
+api_key = st.secrets["DEEPSEEK_API_KEY"]
+cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
 # Funciones de red neuronal
 def codigo_red_neuronal():
@@ -44,11 +43,9 @@ def explicar_backpropagation():
 Es el algoritmo que ajusta los pesos de la red para minimizar el error.  
 Proceso:
 1. Hacer una predicción (forward)
-2. Calcular el error (diferencia entre predicción y realidad)
-3. Propagar el error hacia atrás para ajustar los pesos
-4. Repetir muchas veces (épocas)
-
-Sin backpropagation, no hay aprendizaje profundo.
+2. Calcular el error
+3. Propagar el error hacia atrás
+4. Repetir muchas veces
 """
 
 # Interfaz de chat
@@ -67,12 +64,17 @@ if prompt := st.chat_input("Pregunta sobre redes neuronales..."):
     with st.chat_message("assistant"):
         with st.spinner("Kai está pensando..."):
             try:
-                if "código" in prompt.lower() or "codigo" in prompt.lower():
+                if "código" in prompt.lower() or "codigo" in prompt.lower() or "codigo" in prompt.lower():
                     respuesta = codigo_red_neuronal()
                 elif "backpropagation" in prompt.lower():
                     respuesta = explicar_backpropagation()
                 else:
-                    respuesta = modelo.generate_content(prompt).text
+                    response = cliente.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.7
+                    )
+                    respuesta = response.choices[0].message.content
             except Exception as e:
                 respuesta = f"🌊 Lo siento, tuve un error: {str(e)}"
             st.markdown(respuesta)
