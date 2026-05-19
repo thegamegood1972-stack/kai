@@ -6,7 +6,7 @@ st.title("🌊 Kai - Asistente IA")
 
 # Configurar Gemini
 try:
-    genai.configure(api_key=st.secrets["AIzaSyA61W-BDqDh4JOgk1a3ZEdbBkCMqQaoaLA"])
+   genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     modelo = genai.GenerativeModel('gemini-1.5-flash')
     st.success("✅ Conectado a Gemini!")
 except Exception as e:
