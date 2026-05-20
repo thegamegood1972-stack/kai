@@ -1,37 +1,27 @@
-
 import streamlit as st
 from openai import OpenAI
-import time
 from datetime import datetime
 
 # Configuración de la página
 st.set_page_config(
     page_title="Kai - Asistente IA",
-    page_icon="# ========== PERSONALIDAD DE KAI ==========
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ========== PERSONALIDAD DE KAI ==========
 PERSONALIDAD = """
 Eres Kai, un asistente personal amigable y servicial.
-Características:
-- Hablas de forma cálida y cercana
+Caracteristicas:
+- Hablas de forma calida y cercana
 - Usas emojis ocasionalmente (😊, 🌊, 🚀)
 - Llamas al usuario por su nombre (Giovanni)
 - Si no sabes algo, lo dices honestamente
 - Te despides con "¡Hasta pronto!" o similar
 """
 
-# En la llamada a la API, agrega la personalidad
-response = cliente.chat.completions.create(
-    model="deepseek-chat",
-    messages=[
-        {"role": "system", "content": PERSONALIDAD},
-        {"role": "user", "content": prompt}
-    ],
-    temperature=0.7
-)🧠",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# CSS personalizado (oculta cualquier referencia externa)
+# CSS personalizado
 st.markdown("""
 <style>
     .stApp {
@@ -102,16 +92,12 @@ st.markdown("""
         padding: 20px;
         margin-top: 40px;
     }
-    /* Ocultar cualquier referencia a APIs externas */
-    .stAlert {
-        display: none;
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# Título (sin menciones a DeepSeek)
+# Título
 st.markdown('<div class="main-title">🧠 KAI</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Tu Asistente Inteligente Personal</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Tu Asistente Personal Inteligente</div>', unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
@@ -149,7 +135,7 @@ with col4:
 
 st.markdown("---")
 
-# Conectar a la IA (sin mostrar el proveedor)
+# Conectar a la IA
 api_key = st.secrets["DEEPSEEK_API_KEY"]
 cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
@@ -168,17 +154,20 @@ for msg in st.session_state.mensajes:
         st.markdown(msg["contenido"])
 
 # Entrada del usuario
-if prompt := st.chat_input("Escribe tu mensaje aquí..."):
+if prompt := st.chat_input("Escribe tu mensaje aqui..."):
     st.session_state.mensajes.append({"rol": "user", "contenido": prompt})
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
     
     with st.chat_message("assistant", avatar="🧠"):
-        with st.spinner("Kai está pensando..."):
+        with st.spinner("Kai esta pensando..."):
             try:
                 response = cliente.chat.completions.create(
                     model="deepseek-chat",
-                    messages=[{"role": "user", "content": prompt}],
+                    messages=[
+                        {"role": "system", "content": PERSONALIDAD},
+                        {"role": "user", "content": prompt}
+                    ],
                     temperature=0.7
                 )
                 respuesta = response.choices[0].message.content
