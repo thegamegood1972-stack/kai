@@ -100,12 +100,12 @@ with st.sidebar:
         st.metric("💬 Mensajes", total_msg)
     st.markdown("---")
     st.markdown("### 🎯 Capacidades")
-    st.markdown("- 🧠 Explicar redes neuronales")
-    st.markdown("- 💻 Generar código Python")
-    st.markdown("- 📚 Enseñar backpropagation")
-    st.markdown("- ⚡ Respuesta inmediata")
+    st.markdown("- Explicar redes neuronales")
+    st.markdown("- Generar codigo Python")
+    st.markdown("- Ensenar backpropagation")
+    st.markdown("- Respuesta inmediata")
     st.markdown("---")
-    st.markdown("### 🚀 Versión")
+    st.markdown("### 🚀 Version")
     st.markdown("**Kai AI 3.0**")
     st.caption("Desarrollado por Giovanni")
 
@@ -114,7 +114,7 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.markdown('<div class="stat-card"><h2>🧠</h2><p>Redes Neuronales</p></div>', unsafe_allow_html=True)
 with col2:
-    st.markdown('<div class="stat-card"><h2>⚡</h2><p>Respuesta Rápida</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><h2>⚡</h2><p>Respuesta Rapida</p></div>', unsafe_allow_html=True)
 with col3:
     st.markdown('<div class="stat-card"><h2>💡</h2><p>Aprendizaje</p></div>', unsafe_allow_html=True)
 with col4:
@@ -122,35 +122,58 @@ with col4:
 
 st.markdown("---")
 
-# Función de respuesta simulada (no necesita API)
+# Función de respuesta simulada
 def responder_simulado(prompt):
     prompt_lower = prompt.lower()
     
     if any(p in prompt_lower for p in ["hola", "buenos", "saludos"]):
-        return "🌊 ¡Hola! Soy Kai, tu asistente de redes neuronales. ¿En qué puedo ayudarte hoy? 😊"
+        return "🌊 Hola! Soy Kai, tu asistente de redes neuronales. En que puedo ayudarte hoy?"
     
-    elif any(p in prompt_lower for p in ["codigo", "código", "programa", "implementar"]):
-        return """**🧠 Código de Red Neuronal en Python**
-
-```python
-import numpy as np
-
-class RedNeuronal:
-    def __init__(self, entradas, ocultas, salidas):
-        self.w1 = np.random.randn(entradas, ocultas) * 0.5
-        self.w2 = np.random.randn(ocultas, salidas) * 0.5
+    elif any(p in prompt_lower for p in ["codigo", "codigo", "programa", "implementar"]):
+        return "**Codigo de Red Neuronal en Python**\n\n```python\nimport numpy as np\n\nclass RedNeuronal:\n    def __init__(self, entradas, ocultas, salidas):\n        self.w1 = np.random.randn(entradas, ocultas) * 0.5\n        self.w2 = np.random.randn(ocultas, salidas) * 0.5\n    \n    def activacion(self, x):\n        return 1 / (1 + np.exp(-x))\n    \n    def forward(self, X):\n        self.z1 = np.dot(X, self.w1)\n        self.a1 = self.activacion(self.z1)\n        self.z2 = np.dot(self.a1, self.w2)\n        self.a2 = self.activacion(self.z2)\n        return self.a2\n\n# Ejemplo\nX = np.array([[0,0], [0,1], [1,0], [1,1]])\nred = RedNeuronal(2, 4, 1)\nprint(red.forward(X))\n```\n\nTe gustaria que explique como funciona?"
     
-    def activacion(self, x):
-        return 1 / (1 + np.exp(-x))
+    elif "backpropagation" in prompt_lower:
+        return "**Retropropagacion (Backpropagation)**\n\nEs el algoritmo que ajusta los pesos de la red para minimizar el error.\n\n**Proceso:**\n1. Forward pass - Hace una prediccion\n2. Calcular error - Diferencia entre prediccion y valor real\n3. Backward pass - Propaga el error hacia atras\n4. Actualizar pesos - Ajusta las conexiones\n5. Repetir - Durante muchas epocas\n\n**Analogia:** Es como aprender a lanzar una pelota: pruebas, ves el error, ajustas y repites hasta acertar."
     
-    def forward(self, X):
-        self.z1 = np.dot(X, self.w1)
-        self.a1 = self.activacion(self.z1)
-        self.z2 = np.dot(self.a1, self.w2)
-        self.a2 = self.activacion(self.z2)
-        return self.a2
+    elif "gracias" in prompt_lower:
+        return "🌊 De nada! Estoy aqui para ayudarte. Alguna otra pregunta?"
+    
+    else:
+        return f"🌊 Entiendo tu pregunta sobre: '{prompt}'.\n\nPuedes pedirme:\n- Codigo de redes neuronales\n- Explicacion de backpropagation\n- Conceptos de deep learning"
 
-# Ejemplo de uso
-X = np.array([[0,0], [0,1], [1,0], [1,1]])
-red = RedNeuronal(2, 4, 1)
-print(red.forward(X))
+# Inicializar mensajes
+if "mensajes" not in st.session_state:
+    st.session_state.mensajes = []
+    st.session_state.mensajes.append({
+        "rol": "assistant",
+        "contenido": "🌊 **Bienvenido a Kai!**\n\nSoy tu asistente especializado en redes neuronales e inteligencia artificial.\n\n**Puedo ayudarte con:**\n- Codigo de redes neuronales\n- Explicacion de backpropagation\n- Conceptos de deep learning\n\n**Por donde empezamos?**"
+    })
+
+# Mostrar mensajes
+for msg in st.session_state.mensajes:
+    avatar = "🧠" if msg["rol"] == "assistant" else "👤"
+    with st.chat_message(msg["rol"], avatar=avatar):
+        st.markdown(msg["contenido"])
+
+# Entrada del usuario
+if prompt := st.chat_input("Escribe tu mensaje aqui..."):
+    st.session_state.mensajes.append({"rol": "user", "contenido": prompt})
+    with st.chat_message("user", avatar="👤"):
+        st.markdown(prompt)
+    
+    with st.chat_message("assistant", avatar="🧠"):
+        with st.spinner("Kai esta pensando..."):
+            time.sleep(0.5)
+            respuesta = responder_simulado(prompt)
+            st.markdown(respuesta)
+    
+    st.session_state.mensajes.append({"rol": "assistant", "contenido": respuesta})
+    st.rerun()
+
+# Footer
+st.markdown("""
+<div class="footer">
+    <p>Kai AI - Asistente de Redes Neuronales | Desarrollado con Streamlit</p>
+    <p>Modo Demostracion | Totalmente funcional</p>
+</div>
+""", unsafe_allow_html=True)
