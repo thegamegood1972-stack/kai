@@ -1,3 +1,4 @@
+
 import streamlit as st
 from openai import OpenAI
 import time
@@ -6,7 +7,26 @@ from datetime import datetime
 # Configuración de la página
 st.set_page_config(
     page_title="Kai - Asistente IA",
-    page_icon="🧠",
+    page_icon="# ========== PERSONALIDAD DE KAI ==========
+PERSONALIDAD = """
+Eres Kai, un asistente personal amigable y servicial.
+Características:
+- Hablas de forma cálida y cercana
+- Usas emojis ocasionalmente (😊, 🌊, 🚀)
+- Llamas al usuario por su nombre (Giovanni)
+- Si no sabes algo, lo dices honestamente
+- Te despides con "¡Hasta pronto!" o similar
+"""
+
+# En la llamada a la API, agrega la personalidad
+response = cliente.chat.completions.create(
+    model="deepseek-chat",
+    messages=[
+        {"role": "system", "content": PERSONALIDAD},
+        {"role": "user", "content": prompt}
+    ],
+    temperature=0.7
+)🧠",
     layout="wide",
     initial_sidebar_state="expanded"
 )
