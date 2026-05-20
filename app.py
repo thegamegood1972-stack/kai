@@ -2,15 +2,8 @@ import streamlit as st
 from openai import OpenAI
 from datetime import datetime
 
-# Configuración de la página
-st.set_page_config(
-    page_title="Kai - Asistente IA",
-    page_icon="🧠",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Kai - Asistente IA", page_icon="🧠", layout="wide")
 
-# ========== PERSONALIDAD DE KAI ==========
 PERSONALIDAD = """
 Eres Kai, un asistente personal amigable y servicial.
 Caracteristicas:
@@ -18,88 +11,28 @@ Caracteristicas:
 - Usas emojis ocasionalmente (😊, 🌊, 🚀)
 - Llamas al usuario por su nombre (Giovanni)
 - Si no sabes algo, lo dices honestamente
-- Te despides con "¡Hasta pronto!" o similar
 """
 
-# CSS personalizado
 st.markdown("""
 <style>
-    .stApp {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    }
-    .main-title {
-        text-align: center;
-        font-size: 4rem;
-        font-weight: bold;
-        background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0;
-    }
-    .subtitle {
-        text-align: center;
-        color: rgba(255,255,255,0.7);
-        margin-bottom: 30px;
-        font-size: 1.2rem;
-    }
-    .stat-card {
-        background: rgba(255,255,255,0.08);
-        border-radius: 20px;
-        padding: 20px;
-        text-align: center;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.15);
-        transition: all 0.3s ease;
-    }
-    .stat-card:hover {
-        transform: translateY(-8px);
-        background: rgba(255,255,255,0.15);
-    }
-    .stButton > button {
-        background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-        color: white;
-        border: none;
-        border-radius: 30px;
-        padding: 12px 35px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        width: 100%;
-    }
-    .stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 0 25px rgba(0,210,255,0.5);
-    }
-    .stTextInput > div > div > input {
-        border-radius: 30px;
-        border: 2px solid rgba(0,210,255,0.3);
-        background: rgba(0,0,0,0.4);
-        color: white;
-        font-size: 1rem;
-        padding: 12px 25px;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: #00d2ff;
-        box-shadow: 0 0 15px rgba(0,210,255,0.3);
-    }
-    [data-testid="stSidebar"] {
-        background: rgba(0,0,0,0.4);
-        backdrop-filter: blur(10px);
-        border-right: 1px solid rgba(255,255,255,0.1);
-    }
-    .footer {
-        text-align: center;
-        color: rgba(255,255,255,0.4);
-        padding: 20px;
-        margin-top: 40px;
-    }
+    .stApp { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+    .main-title { text-align: center; font-size: 4rem; font-weight: bold; background: linear-gradient(90deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0; }
+    .subtitle { text-align: center; color: rgba(255,255,255,0.7); margin-bottom: 30px; font-size: 1.2rem; }
+    .stat-card { background: rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; text-align: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); transition: all 0.3s ease; }
+    .stat-card:hover { transform: translateY(-8px); background: rgba(255,255,255,0.15); }
+    .stButton > button { background: linear-gradient(90deg, #00d2ff, #3a7bd5); color: white; border: none; border-radius: 30px; padding: 12px 35px; font-weight: bold; transition: all 0.3s ease; width: 100%; }
+    .stButton > button:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(0,210,255,0.5); }
+    .stTextInput > div > div > input { border-radius: 30px; border: 2px solid rgba(0,210,255,0.3); background: rgba(0,0,0,0.4); color: white; font-size: 1rem; padding: 12px 25px; }
+    .stTextInput > div > div > input:focus { border-color: #00d2ff; box-shadow: 0 0 15px rgba(0,210,255,0.3); }
+    [data-testid="stSidebar"] { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.1); }
+    .footer { text-align: center; color: rgba(255,255,255,0.4); padding: 20px; margin-top: 40px; }
 </style>
 """, unsafe_allow_html=True)
 
-# Título
 st.markdown('<div class="main-title">🧠 KAI</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Tu Asistente Personal Inteligente</div>', unsafe_allow_html=True)
 
-# Sidebar
+# Sidebar con donación
 with st.sidebar:
     st.markdown("## 🌊 **Kai AI**")
     st.markdown("---")
@@ -109,8 +42,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 📊 **Estadísticas**")
     if "mensajes" in st.session_state:
-        total_msg = len(st.session_state.mensajes)
-        st.metric("💬 Conversaciones", total_msg)
+        st.metric("💬 Conversaciones", len(st.session_state.mensajes))
     st.markdown("---")
     st.markdown("### 🎯 **Capacidades**")
     st.markdown("- 🧠 Inteligencia Artificial")
@@ -118,6 +50,13 @@ with st.sidebar:
     st.markdown("- 📚 Aprendizaje continuo")
     st.markdown("- ⚡ Respuesta inmediata")
     st.markdown("---")
+    
+    # ☕ Botón de Donación Ko-fi
+    st.markdown("### ☕ **Apoya a Kai**")
+    st.markdown("Si te es útil, invitame un café:")
+    st.markdown("[![Donar](https://img.shields.io/badge/☕_Donar-Ko--fi-ff5e5e?style=for-the-badge)](https://ko-fi.com/tuusuario)")
+    st.markdown("---")
+    
     st.markdown("### 🚀 **Versión**")
     st.markdown("**Kai 1.0**")
     st.caption("By Giovanni")
@@ -139,35 +78,25 @@ st.markdown("---")
 api_key = st.secrets["DEEPSEEK_API_KEY"]
 cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
-# Inicializar mensajes
 if "mensajes" not in st.session_state:
     st.session_state.mensajes = []
-    st.session_state.mensajes.append({
-        "rol": "assistant",
-        "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal de inteligencia artificial.\n\n**Puedo ayudarte con:**\n- 💡 Responder preguntas\n- 💻 Generar código\n- 📚 Explicar conceptos\n- 🤔 Lo que necesites\n\n**¿En qué puedo ayudarte hoy?** 🚀"
-    })
+    st.session_state.mensajes.append({"rol": "assistant", "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal de inteligencia artificial.\n\n**¿En qué puedo ayudarte hoy?** 🚀"})
 
-# Mostrar mensajes
 for msg in st.session_state.mensajes:
     avatar = "🧠" if msg["rol"] == "assistant" else "👤"
     with st.chat_message(msg["rol"], avatar=avatar):
         st.markdown(msg["contenido"])
 
-# Entrada del usuario
 if prompt := st.chat_input("Escribe tu mensaje aqui..."):
     st.session_state.mensajes.append({"rol": "user", "contenido": prompt})
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
-    
     with st.chat_message("assistant", avatar="🧠"):
         with st.spinner("Kai esta pensando..."):
             try:
                 response = cliente.chat.completions.create(
                     model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": PERSONALIDAD},
-                        {"role": "user", "content": prompt}
-                    ],
+                    messages=[{"role": "system", "content": PERSONALIDAD}, {"role": "user", "content": prompt}],
                     temperature=0.7
                 )
                 respuesta = response.choices[0].message.content
@@ -175,11 +104,9 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
             except Exception as e:
                 st.error(f"Error: {str(e)}")
                 respuesta = f"Lo siento, tuve un error: {str(e)}"
-    
     st.session_state.mensajes.append({"rol": "assistant", "contenido": respuesta})
     st.rerun()
 
-# Footer
 st.markdown("""
 <div class="footer">
     <p>🧠 <strong>Kai AI</strong> - Asistente Personal Inteligente</p>
