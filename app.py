@@ -39,19 +39,6 @@ st.markdown("""
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255,255,255,0.2);
     }
-    .stButton > button {
-        background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-        color: white;
-        border: none;
-        border-radius: 30px;
-        padding: 10px 25px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(0,210,255,0.5);
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -69,16 +56,10 @@ with st.sidebar:
         st.metric("Total de mensajes", total_msg)
     st.markdown("---")
     st.markdown("### 🎯 Capacidades")
-    st.markdown("""
-    - Conversacion natural
-    - Codigo de redes neuronales
-    - Explicacion de conceptos IA
-    - Respuesta rapida
-    """)
-    st.markdown("---")
-    st.markdown("### 🌟 Version")
-    st.markdown("**Kai AI v2.0**")
-    st.caption("Desarrollado por Giovanni")
+    st.markdown("- Conversacion natural")
+    st.markdown("- Codigo de redes neuronales")
+    st.markdown("- Explicacion de conceptos IA")
+    st.markdown("- Respuesta rapida")
 
 # Columnas
 col1, col2, col3, col4 = st.columns(4)
@@ -108,23 +89,13 @@ def mostrar_escritura(texto, placeholder):
     palabras = texto.split()
     for i in range(len(palabras)):
         placeholder.markdown(" ".join(palabras[:i+1]) + " ▌")
-        time.sleep(0.05)
+        time.sleep(0.03)
     placeholder.markdown(texto)
 
 # Inicializar mensajes
 if "mensajes" not in st.session_state:
     st.session_state.mensajes = []
-    bienvenida = """🌊 **Bienvenido a Kai!**
-
-Soy tu asistente especializado en **redes neuronales e inteligencia artificial**.
-
-Puedes preguntarme sobre:
-- 🧠 Codigo de redes neuronales
-- 📚 Explicacion de backpropagation
-- 💡 Conceptos de deep learning
-- 🤖 Cualquier tema de IA
-
-**Por donde empezamos?**"""
+    bienvenida = "🌊 **Bienvenido a Kai!**\n\nSoy tu asistente especializado en **redes neuronales e inteligencia artificial**.\n\nPuedes preguntarme sobre:\n- 🧠 Codigo de redes neuronales\n- 📚 Explicacion de backpropagation\n- 💡 Conceptos de deep learning\n- 🤖 Cualquier tema de IA\n\n**Por donde empezamos?**"
     st.session_state.mensajes.append({"rol": "assistant", "contenido": bienvenida})
 
 # Mostrar mensajes
@@ -143,27 +114,25 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
         with st.spinner("Kai esta pensando..."):
             try:
                 if any(p in prompt.lower() for p in ["codigo", "codigo", "programa", "implementar"]):
-                    respuesta = """**Codigo de Red Neuronal Simple**
-
-```python
-import numpy as np
-
-class RedNeuronal:
-    def __init__(self, entradas, ocultas, salidas):
-        self.w1 = np.random.randn(entradas, ocultas) * 0.5
-        self.w2 = np.random.randn(ocultas, salidas) * 0.5
+                    respuesta = "**Codigo de Red Neuronal Simple**\n\n```python\nimport numpy as np\n\nclass RedNeuronal:\n    def __init__(self, entradas, ocultas, salidas):\n        self.w1 = np.random.randn(entradas, ocultas) * 0.5\n        self.w2 = np.random.randn(ocultas, salidas) * 0.5\n    \n    def activacion(self, x):\n        return 1 / (1 + np.exp(-x))\n    \n    def forward(self, X):\n        self.z1 = np.dot(X, self.w1)\n        self.a1 = self.activacion(self.z1)\n        self.z2 = np.dot(self.a1, self.w2)\n        self.a2 = self.activacion(self.z2)\n        return self.a2\n\n# Ejemplo\nentrada = np.array([[0,0], [0,1], [1,0], [1,1]])\nred = RedNeuronal(2, 4, 1)\nprint(red.forward(entrada))\n```\n\n💡 **Te gustaria que explique como funciona este codigo?**"
+                
+                elif "backpropagation" in prompt.lower():
+                    respuesta = "**🧠 Retropropagacion (Backpropagation)**\n\nEs el algoritmo que ajusta los pesos de la red neuronal para minimizar el error.\n\n**Proceso:**\n1. Forward pass - Hace una prediccion\n2. Calcular error - Diferencia entre prediccion y valor real\n3. Backward pass - Propaga el error hacia atras\n4. Actualizar pesos - Ajusta las conexiones\n5. Repetir - Durante muchas epocas\n\n**Analogia:** Es como aprender a lanzar una pelota: pruebas, ves el error, ajustas y repites hasta acertar.\n\nQuieres que te muestre un ejemplo practico?"
+                
+                else:
+                    respuesta = modelo.generate_content(prompt).text
+                
+                placeholder = st.empty()
+                mostrar_escritura(respuesta, placeholder)
+                
+            except Exception as e:
+                respuesta = f"🌊 **Lo siento, tuve un error:** {str(e)}\n\nPor favor, intenta con otra pregunta."
+                placeholder = st.empty()
+                mostrar_escritura(respuesta, placeholder)
     
-    def activacion(self, x):
-        return 1 / (1 + np.exp(-x))
-    
-    def forward(self, X):
-        self.z1 = np.dot(X, self.w1)
-        self.a1 = self.activacion(self.z1)
-        self.z2 = np.dot(self.a1, self.w2)
-        self.a2 = self.activacion(self.z2)
-        return self.a2
+    st.session_state.mensajes.append({"rol": "assistant", "contenido": respuesta})
+    st.rerun()
 
-# Ejemplo de uso
-entrada = np.array([[0,0], [0,1], [1,0], [1,1]])
-red = RedNeuronal(2, 4, 1)
-print(red.forward(entrada))
+# Footer
+st.markdown("---")
+st.markdown("<p style='text-align: center; color: #888;'>🧠 Kai AI - Desarrollado con Streamlit y Gemini</p>", unsafe_allow_html=True)
