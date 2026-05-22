@@ -142,6 +142,33 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
     st.session_state.mensajes.append({"rol": "assistant", "contenido": respuesta})
     st.rerun()
 
+# ========== PANEL DE LOGS PROTEGIDO (SOLO CREADOR) ==========
+ADMIN_LOG_PASSWORD = "kai2026"
+
+with st.expander("🔒 Acceso Creador"):
+    password_input = st.text_input("Contraseña:", type="password", key="log_password")
+    if st.button("Acceder a logs"):
+        if password_input == ADMIN_LOG_PASSWORD:
+            st.success("Acceso concedido")
+            
+            import json
+            import os
+            import pandas as pd
+            
+            if os.path.exists("kai_usage_log.json"):
+                with open("kai_usage_log.json", "r") as f:
+                    logs = json.load(f)
+                if logs:
+                    df = pd.DataFrame(logs)
+                    st.dataframe(df)
+                    st.download_button("📥 Descargar CSV", df.to_csv(index=False), "conversaciones.csv")
+                else:
+                    st.info("No hay conversaciones registradas aún")
+            else:
+                st.info("El archivo de logs aún no existe")
+        else:
+            st.error("Contraseña incorrecta")
+
 # ========== FOOTER ==========
 st.markdown("""
 <div class="footer">
@@ -149,21 +176,3 @@ st.markdown("""
     <p>⚡ Disponible 24/7 | 💡 Respuesta inmediata | ☕ Apoya con un café</p>
 </div>
 """, unsafe_allow_html=True)
-
-# === TEMPORAL: VER LOGS DE CONVERSACIONES ===
-with st.expander("📊 Ver conversaciones (solo creador)"):
-    import json
-    import os
-    import pandas as pd
-    
-    if os.path.exists("kai_usage_log.json"):
-        with open("kai_usage_log.json", "r") as f:
-            logs = json.load(f)
-        if logs:
-            df = pd.DataFrame(logs)
-            st.dataframe(df)
-            st.download_button("Descargar CSV", df.to_csv(index=False), "conversaciones.csv")
-        else:
-            st.info("No hay conversaciones registradas aún")
-    else:
-        st.info("El archivo de logs aún no existe")
