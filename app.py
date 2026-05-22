@@ -149,6 +149,7 @@ st.markdown("""
     <p>⚡ Disponible 24/7 | 💡 Respuesta inmediata | ☕ Apoya con un café</p>
 </div>
 """, unsafe_allow_html=True)
+
 # === TEMPORAL: VER LOGS DE CONVERSACIONES ===
 with st.expander("📊 Ver conversaciones (solo creador)"):
     import json
@@ -166,11 +167,3 @@ with st.expander("📊 Ver conversaciones (solo creador)"):
             st.info("No hay conversaciones registradas aún")
     else:
         st.info("El archivo de logs aún no existe")
-
-# ========== FOOTER ==========
-st.markdown("""
-<div class="footer">
-    <p>🧠 <strong>Kai AI</strong> - Asistente Personal Inteligente</p>
-    <p>⚡ Disponible 24/7 | 💡 Respuesta inmediata | ☕ Apoya con un café</p>
-</div>
-""", unsafe_allow_html=True)
