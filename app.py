@@ -8,11 +8,10 @@ import hashlib
 # ========== CONFIGURACIÓN ==========
 st.set_page_config(
     page_title="Kai - Asistente IA",
-    page_icon="🧠",
+    page_icon="https://i.ibb.co/YSmfTtz/logo.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
 # ========== ARCHIVO DE LOGS ==========
 LOG_FILE = "kai_usage_log.json"
 
