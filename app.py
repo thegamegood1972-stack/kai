@@ -14,29 +14,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ========== CONTADOR DE VISITANTES ==========
-CONTADOR_FILE = "visitantes.json"
-
-def registrar_visitante(usuario_id):
-    """Registra cada visita y cuenta usuarios únicos"""
-    if os.path.exists(CONTADOR_FILE):
-        with open(CONTADOR_FILE, 'r', encoding='utf-8') as f:
-            datos = json.load(f)
-    else:
-        datos = {"total_visitas": 0, "usuarios_unicos": []}
-    
-    # Incrementar visitas totales
-    datos["total_visitas"] += 1
-    
-    # Registrar usuario único si no existe
-    if usuario_id not in datos["usuarios_unicos"]:
-        datos["usuarios_unicos"].append(usuario_id)
-    
-    with open(CONTADOR_FILE, 'w', encoding='utf-8') as f:
-        json.dump(datos, f, ensure_ascii=False, indent=2)
-    
-    return datos["total_visitas"], len(datos["usuarios_unicos"])
-
 # ========== CSS PERSONALIZADO ==========
 st.markdown("""
 <style>
@@ -50,8 +27,6 @@ st.markdown("""
     .stTextInput > div > div > input { border-radius: 30px; border: 2px solid rgba(0,210,255,0.3); background: rgba(0,0,0,0.4); color: white; font-size: 1rem; padding: 12px 25px; }
     [data-testid="stSidebar"] { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.1); }
     .footer { text-align: center; color: rgba(255,255,255,0.4); padding: 20px; margin-top: 40px; }
-    .chat-button { background: rgba(0,210,255,0.1); border-radius: 10px; padding: 8px; margin: 5px 0; cursor: pointer; border: 1px solid rgba(0,210,255,0.2); }
-    .chat-button:hover { background: rgba(0,210,255,0.2); border-color: #00d2ff; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -68,10 +43,7 @@ if "usuario_id" not in st.session_state:
     session_id = str(datetime.now().timestamp())
     st.session_state.usuario_id = hashlib.md5(session_id.encode()).hexdigest()[:8]
 
-# ========== REGISTRAR VISITANTE ==========
-total_visitas, total_unicos = registrar_visitante(st.session_state.usuario_id)
-
-# ========== SISTEMA DE CHATS (CONVERSACIONES) ==========
+# ========== SISTEMA DE CHATS ==========
 CHATS_FILE = "kai_chats.json"
 
 def cargar_chats():
@@ -110,7 +82,6 @@ with st.sidebar:
     st.markdown("## 🌊 **Kai AI**")
     st.markdown("---")
     
-    # Botón para nuevo chat
     if st.button("➕ Nueva conversación", use_container_width=True):
         nuevo = crear_nuevo_chat()
         st.session_state.chats[nuevo["id"]] = nuevo
@@ -121,7 +92,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 📋 **Conversaciones**")
     
-    # Mostrar lista de chats
     for chat_id, chat in st.session_state.chats.items():
         if chat_id == st.session_state.chat_actual_id:
             st.markdown(f"<div style='background: rgba(0,210,255,0.2); border-radius: 10px; padding: 5px 10px; margin: 2px 0;'>🧠 <strong>{chat['titulo'][:30]}</strong></div>", unsafe_allow_html=True)
@@ -142,10 +112,8 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("### 📊 **Estadísticas**")
-    st.metric("💬 Total mensajes", sum(len(c["mensajes"]) for c in st.session_state.chats.values()))
+    st.metric("💬 Mensajes", sum(len(c["mensajes"]) for c in st.session_state.chats.values()))
     st.metric("📁 Conversaciones", len(st.session_state.chats))
-    st.metric("👥 Visitas totales", total_visitas)
-    st.metric("👤 Usuarios únicos", total_unicos)
     
     st.markdown("---")
     st.markdown("### ☕ **Apoya a Kai**")
@@ -182,7 +150,6 @@ with col_edit:
             guardar_chats(st.session_state.chats)
             st.rerun()
 
-# Mostrar mensajes
 for msg in chat_actual["mensajes"]:
     avatar = "🧠" if msg["rol"] == "assistant" else "👤"
     with st.chat_message(msg["rol"], avatar=avatar):
@@ -200,13 +167,11 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
                 historial_api = [
                     {"role": "system", "content": "Eres Kai, un asistente personal amigable y servicial. Mantienes el contexto de la conversación."}
                 ]
-                
                 for msg in chat_actual["mensajes"][-10:]:
                     if msg["rol"] == "user":
                         historial_api.append({"role": "user", "content": msg["contenido"]})
                     else:
                         historial_api.append({"role": "assistant", "content": msg["contenido"]})
-                
                 response = cliente.chat.completions.create(
                     model="deepseek-chat",
                     messages=historial_api,
@@ -214,16 +179,13 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
                 )
                 respuesta = response.choices[0].message.content
                 st.markdown(respuesta)
-                
             except Exception as e:
                 st.error(f"Error: {str(e)}")
                 respuesta = f"Lo siento, tuve un error: {str(e)}"
     
     chat_actual["mensajes"].append({"rol": "assistant", "contenido": respuesta})
-    
     if len([m for m in chat_actual["mensajes"] if m["rol"] == "user"]) == 1:
         chat_actual["titulo"] = prompt[:30] + ("..." if len(prompt) > 30 else "")
-    
     guardar_chats(st.session_state.chats)
     st.rerun()
 
@@ -234,24 +196,3 @@ st.markdown("""
     <p>⚡ Disponible 24/7 | 💡 Conversaciones separadas | ☕ Apoya con un café</p>
 </div>
 """, unsafe_allow_html=True)
-
-# ========== PANEL DE LOGS PROTEGIDO ==========
-with st.expander("🔒 Acceso Creador"):
-    password_input = st.text_input("Contraseña:", type="password", key="log_password")
-    if st.button("Acceder a logs"):
-        if password_input == "kai2026":
-            st.success("Acceso concedido")
-            if os.path.exists("kai_usage_log.json"):
-                with open("kai_usage_log.json", "r") as f:
-                    logs = json.load(f)
-                if logs:
-                    import pandas as pd
-                    df = pd.DataFrame(logs)
-                    st.dataframe(df)
-                    st.download_button("📥 Descargar CSV", df.to_csv(index=False), "conversaciones.csv")
-                else:
-                    st.info("No hay conversaciones registradas aún")
-            else:
-                st.info("El archivo de logs aún no existe")
-        else:
-            st.error("Contraseña incorrecta")
