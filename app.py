@@ -5,36 +5,15 @@ import json
 import os
 import hashlib
 
-# ========== CONFIGURACIÓN ==========
+# ========== CONFIGURACIÓN DE PÁGINA ==========
 st.set_page_config(
     page_title="Kai - Asistente IA",
-    page_icon="https://i.ibb.co/YSmfTtz/logo.png",
+    page_icon="🌊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-# ========== ARCHIVO DE LOGS ==========
-LOG_FILE = "kai_usage_log.json"
 
-def registrar_uso(usuario_id, prompt, respuesta):
-    """Registra cada interacción en un archivo JSON"""
-    registro = {
-        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "usuario_id": usuario_id,
-        "prompt": prompt[:200],
-        "respuesta": respuesta[:200]
-    }
-    
-    logs = []
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, 'r', encoding='utf-8') as f:
-            logs = json.load(f)
-    
-    logs.append(registro)
-    
-    with open(LOG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(logs, f, ensure_ascii=False, indent=2)
-
-# ========== CSS ==========
+# ========== CSS PERSONALIZADO ==========
 st.markdown("""
 <style>
     .stApp { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
@@ -62,14 +41,15 @@ with st.sidebar:
     st.markdown('<span style="color: #00d2ff;">● Activo</span>', unsafe_allow_html=True)
     st.markdown(f"🕐 {datetime.now().strftime('%H:%M:%S')}")
     st.markdown("---")
-    
-    # Botón de donación
+    st.markdown("### 📊 **Estadísticas**")
+    if "mensajes" in st.session_state:
+        st.metric("💬 Conversaciones", len(st.session_state.mensajes))
+    st.markdown("---")
     st.markdown("### ☕ **Apoya a Kai**")
     st.markdown("[![Donar](https://img.shields.io/badge/☕_Donar-Ko--fi-ff5e5e?style=for-the-badge)](https://ko-fi.com/tuusuario)")
     st.markdown("---")
-    
     st.markdown("### 🚀 **Versión**")
-    st.markdown("**Kai 1.0**")
+    st.markdown("**Kai 2.0**")
     st.caption("By Giovanni")
 
 # ========== COLUMNAS ==========
@@ -89,20 +69,30 @@ st.markdown("---")
 api_key = st.secrets["DEEPSEEK_API_KEY"]
 cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
-PERSONALIDAD = """
-Eres Kai, un asistente personal amigable y servicial.
-Caracteristicas:
-- Hablas de forma calida y cercana
-- Usas emojis ocasionalmente (😊, 🌊, 🚀)
-- Si no sabes algo, lo dices honestamente
-"""
+# ========== ARCHIVO DE LOGS ==========
+LOG_FILE = "kai_usage_log.json"
+
+def registrar_uso(usuario_id, prompt, respuesta):
+    registro = {
+        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "usuario_id": usuario_id,
+        "prompt": prompt[:200],
+        "respuesta": respuesta[:200]
+    }
+    logs = []
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, 'r', encoding='utf-8') as f:
+            logs = json.load(f)
+    logs.append(registro)
+    with open(LOG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(logs, f, ensure_ascii=False, indent=2)
 
 # ========== IDENTIFICACIÓN DEL USUARIO ==========
 if "usuario_id" not in st.session_state:
     session_id = str(datetime.now().timestamp())
     st.session_state.usuario_id = hashlib.md5(session_id.encode()).hexdigest()[:8]
 
-# ========== CHAT ==========
+# ========== INICIALIZAR MENSAJES ==========
 if "mensajes" not in st.session_state:
     st.session_state.mensajes = []
     st.session_state.mensajes.append({
@@ -110,54 +100,78 @@ if "mensajes" not in st.session_state:
         "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal de inteligencia artificial.\n\n**¿En qué puedo ayudarte hoy?** 🚀"
     })
 
+# ========== MOSTRAR MENSAJES ==========
 for msg in st.session_state.mensajes:
     avatar = "🧠" if msg["rol"] == "assistant" else "👤"
     with st.chat_message(msg["rol"], avatar=avatar):
         st.markdown(msg["contenido"])
 
+# ========== PROCESAR MENSAJE DEL USUARIO ==========
 if prompt := st.chat_input("Escribe tu mensaje aqui..."):
+    # Agregar mensaje del usuario
     st.session_state.mensajes.append({"rol": "user", "contenido": prompt})
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
     
+    # ========== GENERAR RESPUESTA CON MEMORIA ==========
     with st.chat_message("assistant", avatar="🧠"):
-        with st.spinner("Kai esta pensando..."):
+        with st.spinner("Kai está pensando..."):
             try:
+                # Construir historial para DeepSeek (con memoria)
+                historial_api = []
+                
+                # Personalidad del sistema
+                historial_api.append({
+                    "role": "system",
+                    "content": "Eres Kai, un asistente personal amigable y servicial. Mantienes el contexto de la conversación y respondes de forma coherente. Hablas de forma cálida y usas emojis ocasionalmente."
+                })
+                
+                # Agregar últimos 10 mensajes para mantener contexto
+                for msg in st.session_state.mensajes[-10:]:
+                    if msg["rol"] == "user":
+                        historial_api.append({"role": "user", "content": msg["contenido"]})
+                    else:
+                        historial_api.append({"role": "assistant", "content": msg["contenido"]})
+                
+                # Llamar a DeepSeek con el historial completo
                 response = cliente.chat.completions.create(
                     model="deepseek-chat",
-                    messages=[{"role": "system", "content": PERSONALIDAD}, {"role": "user", "content": prompt}],
+                    messages=historial_api,
                     temperature=0.7
                 )
                 respuesta = response.choices[0].message.content
                 st.markdown(respuesta)
                 
-                # Registrar el uso (solo para ti, en el servidor)
+                # Registrar uso
                 registrar_uso(st.session_state.usuario_id, prompt, respuesta)
                 
             except Exception as e:
                 st.error(f"Error: {str(e)}")
                 respuesta = f"Lo siento, tuve un error: {str(e)}"
     
+    # Guardar respuesta
     st.session_state.mensajes.append({"rol": "assistant", "contenido": respuesta})
     st.rerun()
 
-# ========== PANEL DE LOGS PROTEGIDO (SOLO CREADOR) ==========
-ADMIN_LOG_PASSWORD = "kai2026"
+# ========== FOOTER ==========
+st.markdown("""
+<div class="footer">
+    <p>🧠 <strong>Kai AI</strong> - Asistente Personal Inteligente</p>
+    <p>⚡ Disponible 24/7 | 💡 Respuesta inmediata | ☕ Apoya con un café</p>
+</div>
+""", unsafe_allow_html=True)
 
+# ========== PANEL DE LOGS PROTEGIDO (SOLO CREADOR) ==========
 with st.expander("🔒 Acceso Creador"):
     password_input = st.text_input("Contraseña:", type="password", key="log_password")
     if st.button("Acceder a logs"):
-        if password_input == ADMIN_LOG_PASSWORD:
+        if password_input == "kai2026":
             st.success("Acceso concedido")
-            
-            import json
-            import os
-            import pandas as pd
-            
-            if os.path.exists("kai_usage_log.json"):
-                with open("kai_usage_log.json", "r") as f:
+            if os.path.exists(LOG_FILE):
+                with open(LOG_FILE, "r") as f:
                     logs = json.load(f)
                 if logs:
+                    import pandas as pd
                     df = pd.DataFrame(logs)
                     st.dataframe(df)
                     st.download_button("📥 Descargar CSV", df.to_csv(index=False), "conversaciones.csv")
@@ -167,11 +181,3 @@ with st.expander("🔒 Acceso Creador"):
                 st.info("El archivo de logs aún no existe")
         else:
             st.error("Contraseña incorrecta")
-
-# ========== FOOTER ==========
-st.markdown("""
-<div class="footer">
-    <p>🧠 <strong>Kai AI</strong> - Asistente Personal Inteligente</p>
-    <p>⚡ Disponible 24/7 | 💡 Respuesta inmediata | ☕ Apoya con un café</p>
-</div>
-""", unsafe_allow_html=True)
