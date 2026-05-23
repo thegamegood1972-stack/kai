@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 import os
 import hashlib
+import uuid
 
 # ========== CONFIGURACIÓN DE PÁGINA ==========
 st.set_page_config(
@@ -26,6 +27,8 @@ st.markdown("""
     .stTextInput > div > div > input { border-radius: 30px; border: 2px solid rgba(0,210,255,0.3); background: rgba(0,0,0,0.4); color: white; font-size: 1rem; padding: 12px 25px; }
     [data-testid="stSidebar"] { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.1); }
     .footer { text-align: center; color: rgba(255,255,255,0.4); padding: 20px; margin-top: 40px; }
+    .chat-button { background: rgba(0,210,255,0.1); border-radius: 10px; padding: 8px; margin: 5px 0; cursor: pointer; border: 1px solid rgba(0,210,255,0.2); }
+    .chat-button:hover { background: rgba(0,210,255,0.2); border-color: #00d2ff; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -33,17 +36,87 @@ st.markdown("""
 st.markdown('<div class="main-title">🧠 KAI</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Tu Asistente Personal Inteligente</div>', unsafe_allow_html=True)
 
-# ========== SIDEBAR ==========
+# ========== CONEXIÓN A LA IA ==========
+api_key = st.secrets["DEEPSEEK_API_KEY"]
+cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
+
+# ========== SISTEMA DE CHATS (CONVERSACIONES) ==========
+CHATS_FILE = "kai_chats.json"
+
+def cargar_chats():
+    if os.path.exists(CHATS_FILE):
+        with open(CHATS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+def guardar_chats(chats):
+    with open(CHATS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(chats, f, ensure_ascii=False, indent=2)
+
+def crear_nuevo_chat(titulo="Nueva conversación"):
+    chat_id = str(uuid.uuid4())[:8]
+    return {
+        "id": chat_id,
+        "titulo": titulo,
+        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "mensajes": [
+            {"rol": "assistant", "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal de inteligencia artificial.\n\n**¿En qué puedo ayudarte hoy?** 🚀"}
+        ]
+    }
+
+# ========== INICIALIZAR CHATS ==========
+if "chats" not in st.session_state:
+    st.session_state.chats = cargar_chats()
+    if not st.session_state.chats:
+        nuevo = crear_nuevo_chat()
+        st.session_state.chats[nuevo["id"]] = nuevo
+
+if "chat_actual_id" not in st.session_state:
+    # Seleccionar el primer chat disponible
+    st.session_state.chat_actual_id = list(st.session_state.chats.keys())[0]
+
+# ========== SIDEBAR - LISTA DE CHATS ==========
 with st.sidebar:
     st.markdown("## 🌊 **Kai AI**")
     st.markdown("---")
-    st.markdown("### 📡 **Estado**")
-    st.markdown('<span style="color: #00d2ff;">● Activo</span>', unsafe_allow_html=True)
-    st.markdown(f"🕐 {datetime.now().strftime('%H:%M:%S')}")
+    
+    # Botón para nuevo chat
+    if st.button("➕ Nueva conversación", use_container_width=True):
+        nuevo = crear_nuevo_chat()
+        st.session_state.chats[nuevo["id"]] = nuevo
+        st.session_state.chat_actual_id = nuevo["id"]
+        guardar_chats(st.session_state.chats)
+        st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### 📋 **Conversaciones**")
+    
+    # Mostrar lista de chats
+    for chat_id, chat in st.session_state.chats.items():
+        # Resaltar el chat actual
+        if chat_id == st.session_state.chat_actual_id:
+            st.markdown(f"<div style='background: rgba(0,210,255,0.2); border-radius: 10px; padding: 5px 10px; margin: 2px 0;'>🧠 <strong>{chat['titulo'][:30]}</strong></div>", unsafe_allow_html=True)
+        else:
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                if st.button(f"💬 {chat['titulo'][:30]}", key=f"chat_{chat_id}", use_container_width=True):
+                    st.session_state.chat_actual_id = chat_id
+                    st.rerun()
+            with col2:
+                if st.button("🗑️", key=f"del_{chat_id}"):
+                    # No eliminar si es el único chat
+                    if len(st.session_state.chats) > 1:
+                        del st.session_state.chats[chat_id]
+                        if st.session_state.chat_actual_id == chat_id:
+                            st.session_state.chat_actual_id = list(st.session_state.chats.keys())[0]
+                        guardar_chats(st.session_state.chats)
+                        st.rerun()
+    
     st.markdown("---")
     st.markdown("### 📊 **Estadísticas**")
-    if "mensajes" in st.session_state:
-        st.metric("💬 Conversaciones", len(st.session_state.mensajes))
+    st.metric("💬 Total mensajes", sum(len(c["mensajes"]) for c in st.session_state.chats.values()))
+    st.metric("📁 Conversaciones", len(st.session_state.chats))
+    
     st.markdown("---")
     st.markdown("### ☕ **Apoya a Kai**")
     st.markdown("[![Donar](https://img.shields.io/badge/☕_Donar-Ko--fi-ff5e5e?style=for-the-badge)](https://ko-fi.com/tuusuario)")
@@ -65,75 +138,50 @@ with col4:
 
 st.markdown("---")
 
-# ========== CONEXIÓN A LA IA ==========
-api_key = st.secrets["DEEPSEEK_API_KEY"]
-cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
+# ========== MOSTRAR CHAT ACTUAL ==========
+chat_actual = st.session_state.chats[st.session_state.chat_actual_id]
 
-# ========== ARCHIVO DE LOGS ==========
-LOG_FILE = "kai_usage_log.json"
+# Título del chat actual con opción de editar
+col_title, col_edit = st.columns([4, 1])
+with col_title:
+    st.markdown(f"### 💬 {chat_actual['titulo']}")
+with col_edit:
+    if st.button("✏️ Renombrar"):
+        nuevo_titulo = st.text_input("Nuevo título:", value=chat_actual['titulo'])
+        if nuevo_titulo:
+            chat_actual['titulo'] = nuevo_titulo
+            guardar_chats(st.session_state.chats)
+            st.rerun()
 
-def registrar_uso(usuario_id, prompt, respuesta):
-    registro = {
-        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "usuario_id": usuario_id,
-        "prompt": prompt[:200],
-        "respuesta": respuesta[:200]
-    }
-    logs = []
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, 'r', encoding='utf-8') as f:
-            logs = json.load(f)
-    logs.append(registro)
-    with open(LOG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(logs, f, ensure_ascii=False, indent=2)
-
-# ========== IDENTIFICACIÓN DEL USUARIO ==========
-if "usuario_id" not in st.session_state:
-    session_id = str(datetime.now().timestamp())
-    st.session_state.usuario_id = hashlib.md5(session_id.encode()).hexdigest()[:8]
-
-# ========== INICIALIZAR MENSAJES ==========
-if "mensajes" not in st.session_state:
-    st.session_state.mensajes = []
-    st.session_state.mensajes.append({
-        "rol": "assistant",
-        "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal de inteligencia artificial.\n\n**¿En qué puedo ayudarte hoy?** 🚀"
-    })
-
-# ========== MOSTRAR MENSAJES ==========
-for msg in st.session_state.mensajes:
+# Mostrar mensajes del chat actual
+for msg in chat_actual["mensajes"]:
     avatar = "🧠" if msg["rol"] == "assistant" else "👤"
     with st.chat_message(msg["rol"], avatar=avatar):
         st.markdown(msg["contenido"])
 
-# ========== PROCESAR MENSAJE DEL USUARIO ==========
+# ========== PROCESAR MENSAJE ==========
 if prompt := st.chat_input("Escribe tu mensaje aqui..."):
     # Agregar mensaje del usuario
-    st.session_state.mensajes.append({"rol": "user", "contenido": prompt})
+    chat_actual["mensajes"].append({"rol": "user", "contenido": prompt})
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
     
-    # ========== GENERAR RESPUESTA CON MEMORIA ==========
+    # Generar respuesta
     with st.chat_message("assistant", avatar="🧠"):
         with st.spinner("Kai está pensando..."):
             try:
-                # Construir historial para DeepSeek (con memoria)
-                historial_api = []
+                # Construir historial para DeepSeek
+                historial_api = [
+                    {"role": "system", "content": "Eres Kai, un asistente personal amigable y servicial. Mantienes el contexto de la conversación."}
+                ]
                 
-                # Personalidad del sistema
-                historial_api.append({
-                    "role": "system",
-                    "content": "Eres Kai, un asistente personal amigable y servicial. Mantienes el contexto de la conversación y respondes de forma coherente. Hablas de forma cálida y usas emojis ocasionalmente."
-                })
-                
-                # Agregar últimos 10 mensajes para mantener contexto
-                for msg in st.session_state.mensajes[-10:]:
+                # Agregar últimos 10 mensajes del chat actual
+                for msg in chat_actual["mensajes"][-10:]:
                     if msg["rol"] == "user":
                         historial_api.append({"role": "user", "content": msg["contenido"]})
                     else:
                         historial_api.append({"role": "assistant", "content": msg["contenido"]})
                 
-                # Llamar a DeepSeek con el historial completo
                 response = cliente.chat.completions.create(
                     model="deepseek-chat",
                     messages=historial_api,
@@ -142,42 +190,24 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
                 respuesta = response.choices[0].message.content
                 st.markdown(respuesta)
                 
-                # Registrar uso
-                registrar_uso(st.session_state.usuario_id, prompt, respuesta)
-                
             except Exception as e:
                 st.error(f"Error: {str(e)}")
                 respuesta = f"Lo siento, tuve un error: {str(e)}"
     
     # Guardar respuesta
-    st.session_state.mensajes.append({"rol": "assistant", "contenido": respuesta})
+    chat_actual["mensajes"].append({"rol": "assistant", "contenido": respuesta})
+    
+    # Actualizar título automáticamente si es el primer mensaje del usuario
+    if len([m for m in chat_actual["mensajes"] if m["rol"] == "user"]) == 1:
+        chat_actual["titulo"] = prompt[:30] + ("..." if len(prompt) > 30 else "")
+    
+    guardar_chats(st.session_state.chats)
     st.rerun()
 
 # ========== FOOTER ==========
 st.markdown("""
 <div class="footer">
     <p>🧠 <strong>Kai AI</strong> - Asistente Personal Inteligente</p>
-    <p>⚡ Disponible 24/7 | 💡 Respuesta inmediata | ☕ Apoya con un café</p>
+    <p>⚡ Disponible 24/7 | 💡 Conversaciones separadas | ☕ Apoya con un café</p>
 </div>
 """, unsafe_allow_html=True)
-
-# ========== PANEL DE LOGS PROTEGIDO (SOLO CREADOR) ==========
-with st.expander("🔒 Acceso Creador"):
-    password_input = st.text_input("Contraseña:", type="password", key="log_password")
-    if st.button("Acceder a logs"):
-        if password_input == "kai2026":
-            st.success("Acceso concedido")
-            if os.path.exists(LOG_FILE):
-                with open(LOG_FILE, "r") as f:
-                    logs = json.load(f)
-                if logs:
-                    import pandas as pd
-                    df = pd.DataFrame(logs)
-                    st.dataframe(df)
-                    st.download_button("📥 Descargar CSV", df.to_csv(index=False), "conversaciones.csv")
-                else:
-                    st.info("No hay conversaciones registradas aún")
-            else:
-                st.info("El archivo de logs aún no existe")
-        else:
-            st.error("Contraseña incorrecta")
