@@ -14,13 +14,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ========== CONTADOR DE VISITAS ==========
+# ========== IDENTIDAD DEL CREADOR ==========
+CREADOR_ID = hashlib.md5("jovanni".encode()).hexdigest()[:8]
+
+# ========== CONTADOR DE VISITAS (excluye al creador) ==========
 if "total_visitas" not in st.session_state:
     st.session_state.total_visitas = 0
 
-if "visita_contada" not in st.session_state:
-    st.session_state.total_visitas += 1
-    st.session_state.visita_contada = True
+if "usuarios_unicos" not in st.session_state:
+    st.session_state.usuarios_unicos = []
 
 # ========== CSS PERSONALIZADO ==========
 st.markdown("""
@@ -46,10 +48,18 @@ st.markdown('<div class="subtitle">Tu Asistente Personal Inteligente</div>', uns
 api_key = st.secrets["DEEPSEEK_API_KEY"]
 cliente = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
 
-# ========== IDENTIFICACIÓN DEL USUARIO ==========
-if "usuario_id" not in st.session_state:
-    session_id = str(datetime.now().timestamp())
-    st.session_state.usuario_id = hashlib.md5(session_id.encode()).hexdigest()[:8]
+# ========== IDENTIFICACIÓN DEL USUARIO ACTUAL ==========
+session_id = str(datetime.now().timestamp())
+usuario_actual = hashlib.md5(session_id.encode()).hexdigest()[:8]
+
+# Contar solo si NO es el creador
+if usuario_actual != CREADOR_ID:
+    if "visita_contada" not in st.session_state:
+        st.session_state.total_visitas += 1
+        st.session_state.visita_contada = True
+    
+    if usuario_actual not in st.session_state.usuarios_unicos:
+        st.session_state.usuarios_unicos.append(usuario_actual)
 
 # ========== SISTEMA DE CHATS ==========
 CHATS_FILE = "kai_chats.json"
@@ -122,7 +132,8 @@ with st.sidebar:
     st.markdown("### 📊 **Estadísticas**")
     st.metric("💬 Mensajes", sum(len(c["mensajes"]) for c in st.session_state.chats.values()))
     st.metric("📁 Conversaciones", len(st.session_state.chats))
-    st.metric("👥 Visitas totales", st.session_state.total_visitas)  # <--- CONTADOR
+    st.metric("👥 Visitas totales", st.session_state.total_visitas)
+    st.metric("👤 Usuarios únicos", len(st.session_state.usuarios_unicos))
     
     st.markdown("---")
     st.markdown("### ☕ **Apoya a Kai**")
