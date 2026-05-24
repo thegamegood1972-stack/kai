@@ -63,7 +63,7 @@ def crear_nuevo_chat(titulo="Nueva conversación"):
         "titulo": titulo,
         "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "mensajes": [
-            {"rol": "assistant", "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal de inteligencia artificial.\n\n**¿En qué puedo ayudarte hoy?** 🚀"}
+            {"rol": "assistant", "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal, creado por Jovanni.\n\n**¿En qué puedo ayudarte hoy?** 🚀"}
         ]
     }
 
