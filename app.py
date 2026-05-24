@@ -14,6 +14,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ========== CONTADOR DE VISITAS ==========
+if "total_visitas" not in st.session_state:
+    st.session_state.total_visitas = 0
+
+if "visita_contada" not in st.session_state:
+    st.session_state.total_visitas += 1
+    st.session_state.visita_contada = True
+
 # ========== CSS PERSONALIZADO ==========
 st.markdown("""
 <style>
@@ -63,7 +71,7 @@ def crear_nuevo_chat(titulo="Nueva conversación"):
         "titulo": titulo,
         "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "mensajes": [
-            {"rol": "assistant", "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal, creado por Jovanni.\n\n**¿En qué puedo ayudarte hoy?** 🚀"}
+            {"rol": "assistant", "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal de inteligencia artificial, creado por Jovanni.\n\n**¿En qué puedo ayudarte hoy?** 🚀"}
         ]
     }
 
@@ -114,6 +122,7 @@ with st.sidebar:
     st.markdown("### 📊 **Estadísticas**")
     st.metric("💬 Mensajes", sum(len(c["mensajes"]) for c in st.session_state.chats.values()))
     st.metric("📁 Conversaciones", len(st.session_state.chats))
+    st.metric("👥 Visitas totales", st.session_state.total_visitas)  # <--- CONTADOR
     
     st.markdown("---")
     st.markdown("### ☕ **Apoya a Kai**")
@@ -121,7 +130,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🚀 **Versión**")
     st.markdown("**Kai 2.0**")
-    st.caption("By Giovanni")
+    st.caption("By Jovanni")
 
 # ========== COLUMNAS ==========
 col1, col2, col3, col4 = st.columns(4)
@@ -165,7 +174,7 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
         with st.spinner("Kai está pensando..."):
             try:
                 historial_api = [
-                    {"role": "system", "content": "Eres Kai, un asistente personal amigable y servicial. Mantienes el contexto de la conversación."}
+                    {"role": "system", "content": "Eres Kai, un asistente personal amigable y servicial, creado por Jovanni. Mantienes el contexto de la conversación."}
                 ]
                 for msg in chat_actual["mensajes"][-10:]:
                     if msg["rol"] == "user":
