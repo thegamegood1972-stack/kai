@@ -8,7 +8,7 @@ import uuid
 
 # ========== CONFIGURACIÓN DE PÁGINA ==========
 st.set_page_config(
-    page_title="Kai - Asistente IA",
+    page_title="Kai - Asistente Técnico IA",
     page_icon="🌊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -42,7 +42,7 @@ st.markdown("""
 
 # ========== TÍTULO ==========
 st.markdown('<div class="main-title">🧠 KAI</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Tu Asistente Personal Inteligente</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Asistente Técnico Especializado en IA y Programación</div>', unsafe_allow_html=True)
 
 # ========== CONEXIÓN A LA IA ==========
 api_key = st.secrets["DEEPSEEK_API_KEY"]
@@ -81,7 +81,7 @@ def crear_nuevo_chat(titulo="Nueva conversación"):
         "titulo": titulo,
         "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "mensajes": [
-            {"rol": "assistant", "contenido": "🌊 **¡Bienvenido a Kai!**\n\nSoy tu asistente personal de inteligencia artificial, creado por Jovanni.\n\n**¿En qué puedo ayudarte hoy?** 🚀"}
+            {"rol": "assistant", "contenido": "🧠 **¡Bienvenido a Kai!**\n\nSoy un asistente técnico especializado en **programación, redes neuronales, inteligencia artificial y desarrollo de software**.\n\n**¿En qué puedo ayudarte hoy?**\n\n- Código Python\n- Redes neuronales\n- Explicaciones técnicas\n- Desarrollo de software\n\n🚀 *Pregúntame sobre tecnología.*"}
         ]
     }
 
@@ -97,7 +97,7 @@ if "chat_actual_id" not in st.session_state:
 
 # ========== SIDEBAR ==========
 with st.sidebar:
-    st.markdown("## 🌊 **Kai AI**")
+    st.markdown("## 🌊 **Kai Técnico**")
     st.markdown("---")
     
     if st.button("➕ Nueva conversación", use_container_width=True):
@@ -130,7 +130,7 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("### 📊 **Estadísticas**")
-    st.metric("💬 Mensajes", sum(len(c["mensajes"]) for c in st.session_state.chats.values()))
+    st.metric("💬 Mensajes técnicos", sum(len(c["mensajes"]) for c in st.session_state.chats.values()))
     st.metric("📁 Conversaciones", len(st.session_state.chats))
     st.metric("👥 Visitas totales", st.session_state.total_visitas)
     st.metric("👤 Usuarios únicos", len(st.session_state.usuarios_unicos))
@@ -140,19 +140,19 @@ with st.sidebar:
     st.markdown("[![Donar](https://img.shields.io/badge/☕_Donar-Ko--fi-ff5e5e?style=for-the-badge)](https://ko-fi.com/tuusuario)")
     st.markdown("---")
     st.markdown("### 🚀 **Versión**")
-    st.markdown("**Kai 2.0**")
+    st.markdown("**Kai Técnico 1.0**")
     st.caption("By Jovanni")
 
 # ========== COLUMNAS ==========
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.markdown('<div class="stat-card"><h2>🧠</h2><p>IA Avanzada</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><h2>🧠</h2><p>IA Técnica</p></div>', unsafe_allow_html=True)
 with col2:
-    st.markdown('<div class="stat-card"><h2>⚡</h2><p>Rápida</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><h2>⚡</h2><p>Código Python</p></div>', unsafe_allow_html=True)
 with col3:
-    st.markdown('<div class="stat-card"><h2>💡</h2><p>Inteligente</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><h2>💡</h2><p>Redes Neuronales</p></div>', unsafe_allow_html=True)
 with col4:
-    st.markdown('<div class="stat-card"><h2>🌊</h2><p>Personal</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><h2>🌊</h2><p>Deep Learning</p></div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -176,7 +176,7 @@ for msg in chat_actual["mensajes"]:
         st.markdown(msg["contenido"])
 
 # ========== PROCESAR MENSAJE ==========
-if prompt := st.chat_input("Escribe tu mensaje aqui..."):
+if prompt := st.chat_input("Escribe tu mensaje aquí..."):
     chat_actual["mensajes"].append({"rol": "user", "contenido": prompt})
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
@@ -184,14 +184,16 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
     with st.chat_message("assistant", avatar="🧠"):
         with st.spinner("Kai está pensando..."):
             try:
+                # ========== PERSONALIDAD TÉCNICA ==========
                 historial_api = [
-                    {"role": "system", "content": "Eres Kai, un asistente personal amigable y servicial, creado por Jovanni. Mantienes el contexto de la conversación."}
+                    {"role": "system", "content": "Eres Kai, un asistente técnico especializado en programación, redes neuronales, inteligencia artificial y desarrollo de software. No respondes preguntas personales, cotidianas o no técnicas. Si te preguntan sobre temas no relacionados con tecnología, programación o IA, responde: 'Soy un asistente técnico especializado en programación e inteligencia artificial. ¿En qué puedo ayudarte con código, redes neuronales o desarrollo?'"}
                 ]
                 for msg in chat_actual["mensajes"][-10:]:
                     if msg["rol"] == "user":
                         historial_api.append({"role": "user", "content": msg["contenido"]})
                     else:
                         historial_api.append({"role": "assistant", "content": msg["contenido"]})
+                
                 response = cliente.chat.completions.create(
                     model="deepseek-chat",
                     messages=historial_api,
@@ -199,9 +201,10 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
                 )
                 respuesta = response.choices[0].message.content
                 st.markdown(respuesta)
+                
             except Exception as e:
                 st.error(f"Error: {str(e)}")
-                respuesta = f"Lo siento, tuve un error: {str(e)}"
+                respuesta = f"Error técnico: {str(e)}"
     
     chat_actual["mensajes"].append({"rol": "assistant", "contenido": respuesta})
     if len([m for m in chat_actual["mensajes"] if m["rol"] == "user"]) == 1:
@@ -212,7 +215,7 @@ if prompt := st.chat_input("Escribe tu mensaje aqui..."):
 # ========== FOOTER ==========
 st.markdown("""
 <div class="footer">
-    <p>🧠 <strong>Kai AI</strong> - Asistente Personal Inteligente</p>
-    <p>⚡ Disponible 24/7 | 💡 Conversaciones separadas | ☕ Apoya con un café</p>
+    <p>🧠 <strong>Kai Técnico</strong> - Asistente Especializado en IA y Programación</p>
+    <p>⚡ Disponible 24/7 | 💻 Código Python | 🧠 Redes Neuronales | ☕ Apoya con un café</p>
 </div>
 """, unsafe_allow_html=True)
